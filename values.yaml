@@ -1,0 +1,120 @@
+# FRONTEND
+frontend:
+  image: kb173/ase-awesometimelapse_frontend:0.1
+  app: frontend
+
+  service:
+    name: frontend-service
+    type: LoadBalancer
+    port: 5000
+    targetPort: 8080
+    
+  deployment:
+    name: frontend-deployment
+    replicas: 1
+    containerPort: 8080
+
+# API
+api:
+  image: kb173/ase-awesometimelapse_api:0.1
+  app: api
+
+  service:
+    name: api-service
+    type: LoadBalancer
+    port: 8000
+    targetPort: 8000
+    
+  deployment:
+    name: api-deployment
+    replicas: 1
+    containerPort: 8000
+
+  environment:
+    DATABASE: postgres
+    DATABASE_HOST: postgresdb
+    DATABASE_PORT: 5432
+
+  volume:
+      name: upload-data
+      mountPath: /code/upload/
+
+  persistentVolume:
+    name: api-volume-claim
+    accessMode: ReadWriteOnce
+    storage: 1Gi
+  
+  execution:
+    command: ["python"]
+    args: ["manage.py runserver 0.0.0.0:8000"]
+
+# Worker
+worker:
+  image: kb173/ase-awesometimelapse_worker:0.1
+  app: worker
+
+  service:
+    name: worker-service
+    clusterIP: None
+    
+  deployment:
+    name: worker-deployment
+    replicas: 1
+
+  execution:
+    command: ["python"]
+    args: ["vb_worker.py"]
+
+# RabbitMQ
+rabbitmq:
+  image: rabbitmq:3-management
+  app: rabbitmq
+
+  service:
+    name: rabbitmq-service
+    clusterIP: None
+    port: 5672
+    targetPort: 5672
+    
+  deployment:
+    name: rabbitmq-deployment
+    replicas: 1
+    containerPort: 5672
+  
+  environment:
+    RABBITMQ_ERLANG_COOKIE: very-very-secret-cookie
+
+# Postgres
+postgres:
+  image: postgres:latest
+  app: postgres
+
+  service:
+    name: postgres-service
+    clusterIP: None
+    port: 5432
+    targetPort: 5432
+    
+  deployment:
+    name: postgres-deployment
+    replicas: 1
+    containerPort: 5432
+  
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: timelapse_db
+
+  volume:
+    name: db-data
+    mountPath: /var/lib/postgresql/data
+
+  persistentVolume:
+    name: postgres-volume-claim
+    accessMode: ReadWriteOnce
+    storage: 1Gi
+
+
+# Global environments
+environment:
+    QUEUE_NAME: "worker_queue"

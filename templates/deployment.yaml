@@ -1,0 +1,284 @@
+### FRONTEND
+# Service
+apiVersion: v1
+kind: Service
+{{- with .Values.frontend }}
+metadata:
+  name: {{ .service.name }}
+  labels:
+    app: {{ .app }}
+spec:
+  type: {{ .service.clusterIP }}
+  ports:
+  - port: {{ .service.port }}
+    targetPort: {{ .service.targetPort }}
+  selector:
+    app: {{ .app }}
+{{- end }}
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+{{- with .Values.frontend }}
+metadata:
+  name: {{ .deployment.name }}
+spec:
+  replicas: {{ .deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .app }}
+    spec:
+      containers:
+      - name: {{ .app }}
+        image: {{ .image }}
+        ports:
+        - containerPort: {{ .deployment.containerPort }}
+          name: {{ .app }}
+{{- end }}
+        env:
+          - name: REST_IP
+            value: {{ .Values.api.service.name | quote }}
+          - name: QUEUE_IP
+            value: {{ .Values.rabbitmq.service.name | quote }}
+          - name: QUEUE_NAME
+            value: {{ .Values.environment.QUEUE_NAME | quote }}
+---
+
+### API
+# Service
+apiVersion: v1
+kind: Service
+{{- with .Values.api }}
+metadata:
+  name: {{ .service.name }}
+  labels:
+    app: {{ .app }}
+spec:
+  type: {{ .service.clusterIP }}
+  ports:
+  - port: {{ .service.port }}
+    targetPort: {{ .service.targetPort }}
+  selector:
+    app: {{ .app }}
+{{- end }}
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+{{- with .Values.api }}
+metadata:
+  name: {{ .deployment.name }}
+spec:
+  replicas: {{ .deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .app }}
+    spec:
+      containers:
+      - name: {{ .app }}
+        image: {{ .image }}
+        ports:
+        - containerPort: {{ .deployment.containerPort }}
+          name: {{ .app }}
+        command: {{ .execution.command }}
+        args: {{ .execution.args }}
+        env:
+          - name: DATABASE
+            value: {{ .environment.DATABASE | quote }}
+          - name: DATABASE_HOST
+            value: {{ .environment.DATABASE_HOST | quote }}
+          - name: DATABASE_PORT
+            value: {{ .environment.DATABASE_PORT | quote }}
+        volumeMounts:
+        - name: {{ .volume.name }}
+          mountPath: {{ .volume.mountPath }}
+      volumes:
+      - name: {{ .volume.name }}
+        persistentVolumeClaim:
+          claimName: {{ .persistentVolume.name }}
+{{- end }}
+---
+# Volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+{{- with .Values.api.persistentVolume }}
+metadata:
+  name: {{ .name }}
+spec:
+  accessModes:
+    - {{ .accessMode }}
+  resources:
+    requests:
+      storage: {{ .storage }}
+{{- end }}
+---
+
+### Worker
+# Service
+apiVersion: v1
+kind: Service
+{{- with .Values.worker }}
+metadata:
+  name: {{ .service.name }}
+  labels:
+    app: {{ .app }}
+spec:
+  clusterIP: {{ .service.clusterIP }}
+  selector:
+    app: {{ .app }}
+{{- end }}
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+{{- with .Values.worker }}
+metadata:
+  name: {{ .deployment.name }}
+spec:
+  replicas: {{ .deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .app }}
+    spec:
+      containers:
+      - name: {{ .app }}
+        image: {{ .image }}
+        command: {{ .execution.command }}
+        args: {{ .execution.args }}
+{{- end }}
+        env:
+          - name: REST_IP
+            value: {{ .Values.api.service.name | quote }}
+          - name: QUEUE_IP
+            value: {{ .Values.rabbitmq.service.name | quote }}
+          - name: QUEUE_NAME
+            value: {{ .Values.environment.QUEUE_NAME | quote }}
+---
+
+### RabbitMQ
+# Service
+apiVersion: v1
+kind: Service
+{{- with .Values.rabbitmq }}
+metadata:
+  name: {{ .service.name }}
+  labels:
+    app: {{ .app }}
+spec:
+  clusterIP: {{ .service.clusterIP }}
+  ports:
+  - port: {{ .service.port }}
+    targetPort: {{ .service.targetPort }}
+  selector:
+    app: {{ .app }}
+{{- end }}
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+{{- with .Values.rabbitmq }}
+metadata:
+  name: {{ .deployment.name }}
+spec:
+  replicas: {{ .deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .app }}
+    spec:
+      containers:
+      - name: {{ .app }}
+        image: {{ .image }}
+        ports:
+        - containerPort: {{ .deployment.containerPort }}
+          name: {{ .app }}
+        env:
+          - name: RABBITMQ_ERLANG_COOKIE
+            value: {{ .environment.RABBITMQ_ERLANG_COOKIE | quote }}
+{{- end }}
+---
+
+### Postgres
+# Service
+apiVersion: v1
+kind: Service
+{{- with .Values.postgres }}
+metadata:
+  name: {{ .service.name }}
+  labels:
+    app: {{ .app }}
+spec:
+  clusterIP: {{ .service.clusterIP }}
+  ports:
+  - port: {{ .service.port }}
+    targetPort: {{ .service.targetPort }}
+  selector:
+    app: {{ .app }}
+{{- end }}
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+{{- with .Values.postgres }}
+metadata:
+  name: {{ .deployment.name }}
+spec:
+  replicas: {{ .deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .app }}
+    spec:
+      containers:
+      - name: {{ .app }}
+        image: {{ .image }}
+        ports:
+        - containerPort: {{ .deployment.containerPort }}
+          name: {{ .app }}
+        env:
+          - name: POSTGRES_USER
+            value: {{ .environment.POSTGRES_USER | quote }}
+          - name: POSTGRES_PASSWORD
+            value: {{ .environment.POSTGRES_PASSWORD | quote }}
+          - name: POSTGRES_DB
+            value: {{ .environment.POSTGRES_DB | quote }}
+        volumeMounts:
+        - name: {{ .volume.name }}
+          mountPath: {{ .volume.mountPath }}
+      volumes:
+      - name: {{ .volume.name }}
+        persistentVolumeClaim:
+          claimName: {{ .persistentVolume.name }}
+{{- end }}
+---
+# Volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+{{- with .Values.postgres.persistentVolume }}
+metadata:
+  name: {{ .name }}
+spec:
+  accessModes:
+    - {{ .accessMode }}
+  resources:
+    requests:
+      storage: {{ .storage }}
+{{- end }}

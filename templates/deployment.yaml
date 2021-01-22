@@ -8,7 +8,7 @@ metadata:
   labels:
     app: {{ .app }}
 spec:
-  type: {{ .service.clusterIP }}
+  type: {{ .service.type }}
   ports:
   - port: {{ .service.port }}
     targetPort: {{ .service.targetPort }}
@@ -58,7 +58,7 @@ metadata:
   labels:
     app: {{ .app }}
 spec:
-  type: {{ .service.clusterIP }}
+  type: {{ .service.type }}
   ports:
   - port: {{ .service.port }}
     targetPort: {{ .service.targetPort }}

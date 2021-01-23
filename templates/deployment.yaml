@@ -201,6 +201,7 @@ spec:
       labels:
         app: {{ .app }}
     spec:
+      hostname: rabbitmq
       containers:
       - name: {{ .app }}
         image: {{ .image }}

@@ -32,7 +32,7 @@ api:
 
   environment:
     DATABASE: postgres
-    DATABASE_HOST: postgresdb
+    DATABASE_HOST: postgres
     DATABASE_PORT: 5432
 
   volume:
@@ -46,7 +46,6 @@ api:
   
   execution:
     command: ["python"]
-    args: ["manage.py runserver 0.0.0.0:8000"]
 
 # Worker
 worker:
@@ -104,6 +103,7 @@ postgres:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
     POSTGRES_DB: timelapse_db
+    POSTGRES_HOST_AUTH_METHOD: trust
 
   volume:
     name: db-data

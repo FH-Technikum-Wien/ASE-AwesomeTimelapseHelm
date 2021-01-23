@@ -89,7 +89,7 @@ spec:
         - containerPort: {{ .deployment.containerPort }}
           name: {{ .app }}
         command: {{ .execution.command }}
-        args: {{ .execution.args }}
+        args: ["manage.py", "runserver", "0.0.0.0:8000"]
         env:
           - name: DATABASE
             value: {{ .environment.DATABASE | quote }}

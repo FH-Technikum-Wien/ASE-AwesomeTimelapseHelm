@@ -31,7 +31,7 @@ api:
     containerPort: 8000
 
   environment:
-    DATABASE: postgres
+    DATABASE: timelapse_db
     DATABASE_HOST: postgres
     DATABASE_PORT: 5432
 
@@ -100,8 +100,8 @@ postgres:
     containerPort: 5432
   
   environment:
-    POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: postgres
+    POSTGRES_USER: root
+    POSTGRES_PASSWORD: root
     POSTGRES_DB: timelapse_db
     POSTGRES_HOST_AUTH_METHOD: trust
 

@@ -1,0 +1,36 @@
+# API
+api:
+  image: kb173/ase-awesometimelapse_api:0.1
+  app: api
+
+  service:
+    name: api
+    type: LoadBalancer
+    port: 8000
+    targetPort: 8000
+    
+  deployment:
+    name: api
+    replicas: 1
+    containerPort: 8000
+
+  environment:
+    DATABASE: timelapse_db
+    DATABASE_HOST: postgres
+    DATABASE_PORT: 5432
+
+  volume:
+      name: upload-data
+      mountPath: /code/upload/
+
+  persistentVolume:
+    name: api-volume-claim
+    accessMode: ReadWriteOnce
+    storage: 1Gi
+  
+  execution:
+    command: ["python"]
+
+# Global environments
+environment:
+    QUEUE_NAME: "worker_queue"

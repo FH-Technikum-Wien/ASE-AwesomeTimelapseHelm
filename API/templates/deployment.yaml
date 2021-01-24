@@ -1,0 +1,71 @@
+### API
+# Service
+apiVersion: v1
+kind: Service
+{{- with .Values.api }}
+metadata:
+  name: {{ .service.name }}
+  labels:
+    app: {{ .app }}
+spec:
+  type: {{ .service.type }}
+  ports:
+  - port: {{ .service.port }}
+    targetPort: {{ .service.targetPort }}
+  selector:
+    app: {{ .app }}
+{{- end }}
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+{{- with .Values.api }}
+metadata:
+  name: {{ .deployment.name }}
+spec:
+  replicas: {{ .deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .app }}
+    spec:
+      containers:
+      - name: {{ .app }}
+        image: {{ .image }}
+        ports:
+        - containerPort: {{ .deployment.containerPort }}
+          name: {{ .app }}
+        command: {{ .execution.command }}
+        args: ["manage.py", "runserver", "0.0.0.0:8000"]
+        env:
+          - name: DATABASE
+            value: {{ .environment.DATABASE | quote }}
+          - name: DATABASE_HOST
+            value: {{ .environment.DATABASE_HOST | quote }}
+          - name: DATABASE_PORT
+            value: {{ .environment.DATABASE_PORT | quote }}
+        volumeMounts:
+        - name: {{ .volume.name }}
+          mountPath: {{ .volume.mountPath }}
+      volumes:
+      - name: {{ .volume.name }}
+        persistentVolumeClaim:
+          claimName: {{ .persistentVolume.name }}
+{{- end }}
+---
+# Volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+{{- with .Values.api.persistentVolume }}
+metadata:
+  name: {{ .name }}
+spec:
+  accessModes:
+    - {{ .accessMode }}
+  resources:
+    requests:
+      storage: {{ .storage }}
+{{- end }}
